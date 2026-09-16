@@ -1,26 +1,24 @@
 import type * as Monaco from 'monaco-editor'
 
 type MonacoModule = typeof Monaco
-type ShellLanguageRegistry = Pick<MonacoModule['languages'], 'getLanguages' | 'register'>
 
-export const SHELL_LANGUAGE_ID = 'shell'
-export const BASH_MARKDOWN_LANGUAGE_ALIAS = 'bash'
-
-export function registerShellMarkdownAliases(monaco: { languages: ShellLanguageRegistry }): void {
-  const bashAliasAlreadyRegistered = monaco.languages
+// Why: Monaco resolves Markdown fences by alias (never extension) and its shell
+// language declares `bash` only as an extension, so ```bash rendered plain while
+// ```sh highlighted. Re-registering id 'shell' merges the alias and keeps the
+// built-in tokenizer; `Shell` stays first because Monaco uses the first alias as
+// the language's display name.
+export function registerShellMarkdownAliases(monaco: {
+  languages: Pick<MonacoModule['languages'], 'getLanguages' | 'register'>
+}): void {
+  const bashAlreadyRegistered = monaco.languages
     .getLanguages()
     .some(
-      (language) =>
-        language.id === SHELL_LANGUAGE_ID &&
-        language.aliases?.some((alias) => alias.toLowerCase() === BASH_MARKDOWN_LANGUAGE_ALIAS)
+      ({ id, aliases }) =>
+        id === 'shell' && aliases?.some((alias) => alias.toLowerCase() === 'bash')
     )
-  if (bashAliasAlreadyRegistered) {
+  if (bashAlreadyRegistered) {
     return
   }
 
-  // Monaco merges repeated IDs, preserving its lazy tokenizer while adding fence lookup.
-  monaco.languages.register({
-    id: SHELL_LANGUAGE_ID,
-    aliases: ['Shell', 'sh', BASH_MARKDOWN_LANGUAGE_ALIAS]
-  })
+  monaco.languages.register({ id: 'shell', aliases: ['Shell', 'sh', 'bash'] })
 }

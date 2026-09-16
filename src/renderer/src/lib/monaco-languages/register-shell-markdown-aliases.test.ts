@@ -1,28 +1,24 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  BASH_MARKDOWN_LANGUAGE_ALIAS,
-  registerShellMarkdownAliases,
-  SHELL_LANGUAGE_ID
-} from './register-shell-markdown-aliases'
+import { registerShellMarkdownAliases } from './register-shell-markdown-aliases'
 
 function createMonacoMock(aliases: string[] = ['Shell', 'sh']) {
   return {
     languages: {
-      getLanguages: vi.fn(() => [{ id: SHELL_LANGUAGE_ID, aliases }]),
+      getLanguages: vi.fn(() => [{ id: 'shell', aliases }]),
       register: vi.fn()
     }
   }
 }
 
 describe('registerShellMarkdownAliases', () => {
-  it('adds bash to Monaco shell language lookup without replacing the language ID', () => {
+  it('registers bash alongside the built-in shell aliases', () => {
     const monaco = createMonacoMock()
 
     registerShellMarkdownAliases(monaco)
 
     expect(monaco.languages.register).toHaveBeenCalledWith({
-      id: SHELL_LANGUAGE_ID,
-      aliases: ['Shell', 'sh', BASH_MARKDOWN_LANGUAGE_ALIAS]
+      id: 'shell',
+      aliases: ['Shell', 'sh', 'bash']
     })
   })
 
